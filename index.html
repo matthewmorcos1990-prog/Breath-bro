@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Breathing Timer</title>
+  <style>
+    :root { font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #0b1220; color: #e9eefc; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 20px; font-weight: 700; margin: 0 0 12px; opacity: 0.95; }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    }
+    .phase {
+      font-size: 22px; font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 10px;
+    }
+    .timer {
+      font-size: 72px; font-weight: 800;
+      line-height: 1.0;
+      margin: 6px 0 14px;
+    }
+    .sub {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 14px;
+    }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 140px; }
+    label { display: block; font-size: 12px; opacity: 0.85; margin-bottom: 6px; }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.08);
+      color: #e9eefc;
+      font-size: 16px;
+      outline: none;
+    }
+    .toggles { margin-top: 14px; display: grid; gap: 10px; }
+    .toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+    }
+    .toggle span { font-size: 14px; opacity: 0.95; }
+    input[type="checkbox"] { transform: scale(1.2); }
+    .buttons { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    button {
+      flex: 1;
+      min-width: 160px;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0b1220;
+      background: #cfe1ff;
+      cursor: pointer;
+    }
+    button.secondary { background: rgba(255,255,255,0.14); color: #e9eefc; border: 1px solid rgba(255,255,255,0.18); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .stats {
+      display: flex; justify-content: space-between; gap: 12px; margin-top: 16px;
+      font-size: 13px; opacity: 0.85;
+      flex-wrap: wrap;
+    }
+    .pill { padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); }
+    .hint { margin-top: 14px; font-size: 12px; opacity: 0.7; line-height: 1.35; }
+    .dot {
+      display: inline-block;
+      width: 10px; height: 10px; border-radius: 50%;
+      margin-right: 8px;
+      background: #6ee7b7;
+      box-shadow: 0 0 18px rgba(110,231,183,0.55);
+      vertical-align: middle;
+    }
+    .dot.paused { background: #fbbf24; box-shadow: 0 0 18px rgba(251,191,36,0.45); }
+    .dot.stopped { background: #94a3b8; box-shadow: none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Breathing Timer (In 4s • Out 6s)</h1>
+
+    <div class="card">
+      <div class="phase" id="phase">Ready</div>
+      <div class="timer" id="time">0.0</div>
+      <div class="sub" id="sub">Press Start to begin</div>
+
+      <div class="row">
+        <div>
+          <label for="inhale">Inhale seconds</label>
+          <input id="inhale" type="number" min="1" step="1" value="4" />
+        </div>
+        <div>
+          <label for="exhale">Exhale seconds</label>
+          <input id="exhale" type="number" min="1" step="1" value="6" />
+        </div>
+        <div>
+          <label for="cycles">Cycles (0 = infinite)</label>
+          <input id="cycles" type="number" min="0" step="1" value="0" />
+        </div>
+      </div>
+
+      <div class="toggles">
+        <div class="toggle">
+          <span>Beep on phase change</span>
+          <input id="beep" type="checkbox" checked />
+        </div>
+        <div class="toggle">
+          <span>Voice cue (“Breathe in/out”)</span>
+          <input id="voice" type="checkbox" />
+        </div>
+        <div class="toggle">
+          <span>Vibrate on phase change (mobile)</span>
+          <input id="vibrate" type="checkbox" checked />
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="start">Start</button>
+        <button id="pause" class="secondary" disabled>Pause</button>
+        <button id="reset" class="secondary">Reset</button>
+      </div>
+
+      <div class="stats">
+        <div class="pill"><span class="dot stopped" id="statusDot"></span><span id="statusText">Stopped</span></div>
+        <div class="pill">Phase: <strong id="phaseIdx">—</strong></div>
+        <div class="pill">Cycle: <strong id="cycleIdx">0</strong></div>
+      </div>
+
+      <div class="hint">
+        Tip: if sound/voice doesn’t work on iPhone, tap Start once (user gesture) and keep the screen awake.
+        This is not medical advice — if breathing exercises worsen symptoms, stop and get checked.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----- State -----
+    const ui = {
+      phase: document.getElementById("phase"),
+      time: document.getElementById("time"),
+      sub: document.getElementById("sub"),
+      inhale: document.getElementById("inhale"),
+      exhale: document.getElementById("exhale"),
+      cycles: document.getElementById("cycles"),
+      beep: document.getElementById("beep"),
+      voice: document.getElementById("voice"),
+      vibrate: document.getElementById("vibrate"),
+      start: document.getElementById("start"),
+      pause: document.getElementById("pause"),
+      reset: document.getElementById("reset"),
+      statusText: document.getElementById("statusText"),
+      statusDot: document.getElementById("statusDot"),
+      phaseIdx: document.getElementById("phaseIdx"),
+      cycleIdx: document.getElementById("cycleIdx"),
+    };
+
+    let running = false;
+    let paused = false;
+    let rafId = null;
+
+    let phaseList = []; // [{name, seconds, cue}]
+    let phaseIndex = 0;
+    let cycleCount = 0;
+    let cycleTarget = 0;
+
+    let phaseStartTs = 0;
+    let phaseDurationMs = 0;
+    let pausedAt = 0;
+
+    // ----- Helpers -----
+    function clampInt(v, min, fallback) {
+      const n = parseInt(v, 10);
+      if (Number.isFinite(n) && n >= min) return n;
+      return fallback;
+    }
+
+    function setStatus(kind, text) {
+      ui.statusText.textContent = text;
+      ui.statusDot.classList.remove("stopped", "paused");
+      if (kind === "stopped") ui.statusDot.classList.add("stopped");
+      if (kind === "paused") ui.statusDot.classList.add("paused");
+    }
+
+    function formatTime(s) {
+      return s.toFixed(1);
+    }
+
+    function safeVibrate(pattern) {
+      try {
+        if (ui.vibrate.checked && navigator.vibrate) navigator.vibrate(pattern);
+      } catch (_) {}
+    }
+
+    // Simple beep using Web Audio (created on demand to satisfy mobile autoplay policies)
+    function beep(freq = 660, durationMs = 90) {
+      if (!ui.beep.checked) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = freq;
+        o.type = "sine";
+        g.gain.value = 0.06;
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
+        setTimeout(() => {
+          o.stop();
+          ctx.close();
+        }, durationMs);
+      } catch (_) {}
+    }
+
+    function speak(text) {
+      if (!ui.voice.checked) return;
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.0;
+        u.pitch = 1.0;
+        u.lang = "en-AU";
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    function buildPhases() {
+      const inhaleS = clampInt(ui.inhale.value, 1, 4);
+      const exhaleS = clampInt(ui.exhale.value, 1, 6);
+
+      phaseList = [
+        { name: "Breathe in", seconds: inhaleS, cue: "Breathe in" },
+        { name: "Breathe out", seconds: exhaleS, cue: "Breathe out" },
+      ];
+
+      cycleTarget = clampInt(ui.cycles.value, 0, 0);
+    }
+
+    function startPhase(idx, now) {
+      phaseIndex = idx;
+      const p = phaseList[phaseIndex];
+      ui.phase.textContent = p.name;
+      ui.sub.textContent = `${p.seconds}s`;
+      ui.phaseIdx.textContent = `${phaseIndex + 1}/${phaseList.length}`;
+      ui.cycleIdx.textContent = `${cycleCount}`;
+
+      phaseStartTs = now;
+      phaseDurationMs = p.seconds * 1000;
+
+      // Cues
+      beep(phaseIndex === 0 ? 740 : 520, 90);
+      speak(p.cue);
+      safeVibrate([35, 30, 35]);
+    }
+
+    function tick(now) {
+      if (!running) return;
+
+      if (paused) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const elapsed = now - phaseStartTs;
+      const remaining = Math.max(0, phaseDurationMs - elapsed);
+      ui.time.textContent = formatTime(remaining / 1000);
+
+      if (remaining <= 0) {
+        // Move to next phase / cycle
+        let next = phaseIndex + 1;
+        if (next >= phaseList.length) {
+          next = 0;
+          cycleCount += 1;
+          ui.cycleIdx.textContent = `${cycleCount}`;
+
+          // If user set a cycle target (non-zero), stop when reached
+          if (cycleTarget > 0 && cycleCount >= cycleTarget) {
+            stop();
+            ui.phase.textContent = "Done";
+            ui.time.textContent = "0.0";
+            ui.sub.textContent = `Completed ${cycleCount} cycle(s)`;
+            beep(880, 140);
+            safeVibrate([60, 60, 120]);
+            return;
+          }
+        }
+        startPhase(next, now);
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (running && !paused) return;
+
+      buildPhases();
+
+      if (!running) {
+        running = true;
+        paused = false;
+        cycleCount = 0;
+        setStatus("running", "Running");
+        ui.start.disabled = true;
+        ui.pause.disabled = false;
+        ui.pause.textContent = "Pause";
+
+        const now = performance.now();
+        startPhase(0, now);
+        rafId = requestAnimationFrame(tick);
+      } else if (paused) {
+        // Resume: shift start timestamp by paused duration
+        paused = false;
+        setStatus("running", "Running");
+        ui.pause.textContent = "Pause";
+        const now = performance.now();
+        const pausedDuration = now - pausedAt;
+        phaseStartTs += pausedDuration;
+      }
+    }
+
+    function pause() {
+      if (!running) return;
+      if (!paused) {
+        paused = true;
+        pausedAt = performance.now();
+        setStatus("paused", "Paused");
+        ui.start.disabled = false;
+        ui.pause.textContent = "Resume";
+        ui.sub.textContent = "Paused";
+      } else {
+        start(); // resume
+      }
+    }
+
+    function stop() {
+      running = false;
+      paused = false;
+      setStatus("stopped", "Stopped");
+      ui.start.disabled = false;
+      ui.pause.disabled = true;
+      ui.pause.textContent = "Pause";
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+      ui.phaseIdx.textContent = "—";
+    }
+
+    function reset() {
+      stop();
+      ui.phase.textContent = "Ready";
+      ui.time.textContent = "0.0";
+      ui.sub.textContent = "Press Start to begin";
+      cycleCount = 0;
+      ui.cycleIdx.textContent = "0";
+    }
+
+    // ----- Wire up UI -----
+    ui.start.addEventListener("click", start);
+    ui.pause.addEventListener("click", pause);
+    ui.reset.addEventListener("click", reset);
+
+    // Update display if user edits durations while stopped
+    ["input", "change"].forEach(evt => {
+      ui.inhale.addEventListener(evt, () => { if (!running) ui.sub.textContent = "Press Start to begin"; });
+      ui.exhale.addEventListener(evt, () => { if (!running) ui.sub.textContent = "Press Start to begin"; });
+      ui.cycles.addEventListener(evt, () => { if (!running) ui.sub.textContent = "Press Start to begin"; });
+    });
+
+    // Initial
+    reset();
+  </script>
+</body>
+</html>
