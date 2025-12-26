@@ -2,386 +2,840 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Breathing Timer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Breath-bro</title>
   <style>
-    :root { font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif; }
-    body { margin: 0; background: #0b1220; color: #e9eefc; }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
-    h1 { font-size: 20px; font-weight: 700; margin: 0 0 12px; opacity: 0.95; }
-    .card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    :root{
+      --bg:#070b16;
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.12);
+      --text:#eaf0ff;
+      --muted:rgba(234,240,255,.75);
+      --muted2:rgba(234,240,255,.55);
+      --accent:#cfe1ff;
+      --good:#6ee7b7;
+      --warn:#fbbf24;
+      --ring:rgba(234,240,255,.22);
+      --ring2:rgba(234,240,255,.10);
     }
-    .phase {
-      font-size: 22px; font-weight: 700;
-      letter-spacing: 0.3px;
-      margin-bottom: 10px;
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 800px at 50% 25%, rgba(207,225,255,.12), transparent 60%),
+                  radial-gradient(900px 600px at 20% 70%, rgba(110,231,183,.09), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
-    .timer {
-      font-size: 72px; font-weight: 800;
-      line-height: 1.0;
-      margin: 6px 0 14px;
+    .wrap{ max-width:860px; margin:0 auto; padding:20px; }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:14px;
     }
-    .sub {
-      font-size: 14px;
-      opacity: 0.8;
-      margin-bottom: 14px;
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      background: rgba(207,225,255,.14);
+      border:1px solid rgba(207,225,255,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      display:grid; place-items:center;
+      font-weight:900; color:var(--accent);
     }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .row > * { flex: 1; min-width: 140px; }
-    label { display: block; font-size: 12px; opacity: 0.85; margin-bottom: 6px; }
-    input[type="number"] {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.08);
-      color: #e9eefc;
-      font-size: 16px;
-      outline: none;
+    h1{ font-size:18px; margin:0; letter-spacing:.2px; }
+    .tag{ font-size:12px; color:var(--muted2); margin-top:2px; }
+    .topbtns{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    button{
+      border:0;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:800;
+      font-size:14px;
+      cursor:pointer;
     }
-    .toggles { margin-top: 14px; display: grid; gap: 10px; }
-    .toggle {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
+    .btn{ background:var(--accent); color:#081022; }
+    .btn.secondary{
+      background:rgba(255,255,255,.09);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
     }
-    .toggle span { font-size: 14px; opacity: 0.95; }
-    input[type="checkbox"] { transform: scale(1.2); }
-    .buttons { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-    button {
-      flex: 1;
-      min-width: 160px;
-      border: 0;
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 16px;
-      font-weight: 700;
-      color: #0b1220;
-      background: #cfe1ff;
-      cursor: pointer;
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
     }
-    button.secondary { background: rgba(255,255,255,0.14); color: #e9eefc; border: 1px solid rgba(255,255,255,0.18); }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    .stats {
-      display: flex; justify-content: space-between; gap: 12px; margin-top: 16px;
-      font-size: 13px; opacity: 0.85;
-      flex-wrap: wrap;
+    @media(max-width:860px){ .grid{ grid-template-columns:1fr; } }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      box-shadow: 0 14px 50px rgba(0,0,0,.42);
     }
-    .pill { padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); }
-    .hint { margin-top: 14px; font-size: 12px; opacity: 0.7; line-height: 1.35; }
-    .dot {
-      display: inline-block;
-      width: 10px; height: 10px; border-radius: 50%;
-      margin-right: 8px;
-      background: #6ee7b7;
-      box-shadow: 0 0 18px rgba(110,231,183,0.55);
-      vertical-align: middle;
+
+    /* Main breathing stage */
+    .stage{
+      position:relative;
+      min-height: 440px;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
     }
-    .dot.paused { background: #fbbf24; box-shadow: 0 0 18px rgba(251,191,36,0.45); }
-    .dot.stopped { background: #94a3b8; box-shadow: none; }
+    .stage::before{
+      content:"";
+      position:absolute; inset:-80px;
+      background: radial-gradient(circle at 50% 50%, rgba(207,225,255,.08), transparent 55%);
+      filter: blur(0px);
+      opacity:.9;
+      pointer-events:none;
+    }
+
+    .ringWrap{
+      position:relative;
+      width:min(340px, 78vw);
+      aspect-ratio:1;
+      display:grid; place-items:center;
+    }
+    svg{ overflow:visible; }
+    .ring{
+      position:absolute; inset:0;
+      transform: rotate(-90deg);
+    }
+    .ring circle{
+      fill:none;
+      stroke-width:10;
+      stroke-linecap:round;
+    }
+    .ring .bg{ stroke: var(--ring2); }
+    .ring .fg{ stroke: var(--ring); }
+    .orb{
+      width: min(220px, 52vw);
+      aspect-ratio:1;
+      border-radius:999px;
+      background: radial-gradient(circle at 35% 30%, rgba(234,240,255,.22), rgba(207,225,255,.08) 40%, rgba(7,11,22,.0) 70%),
+                  radial-gradient(circle at 70% 75%, rgba(110,231,183,.12), transparent 55%),
+                  rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow:
+        0 18px 70px rgba(0,0,0,.55),
+        inset 0 0 40px rgba(207,225,255,.10);
+      transform: scale(0.88);
+      transition: box-shadow .2s ease;
+      position:relative;
+    }
+    .orbGlow{
+      position:absolute;
+      inset:-60px;
+      border-radius:999px;
+      background: radial-gradient(circle at 50% 50%, rgba(207,225,255,.12), transparent 62%);
+      filter: blur(2px);
+      opacity:.9;
+      pointer-events:none;
+    }
+
+    .hud{
+      position:absolute;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      text-align:center;
+      padding: 0 12px;
+    }
+    .phase{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .count{
+      font-size:64px;
+      font-weight:950;
+      line-height:1;
+    }
+    .sub{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.25;
+    }
+    .pillRow{
+      margin-top:10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .pill{
+      padding:7px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    /* Controls */
+    .controls{
+      display:grid;
+      gap:12px;
+    }
+    label{ font-size:12px; color:var(--muted); display:block; margin:0 0 6px 2px; }
+    select,input[type="number"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font-size:15px;
+      outline:none;
+    }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media(max-width:520px){ .row{ grid-template-columns:1fr; } }
+
+    .tog{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:14px;
+      color:var(--text);
+    }
+    .tog span{ color:var(--muted); font-size:12px; display:block; margin-top:2px; }
+    .tog .left{ display:flex; flex-direction:column; }
+    input[type="checkbox"]{ transform: scale(1.15); }
+
+    .btnRow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .btnRow button{ flex:1; min-width: 150px; }
+
+    .foot{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted2);
+      line-height:1.35;
+    }
+
+    /* Minimal mode */
+    body.minimal header,
+    body.minimal .rightCol{ display:none; }
+    body.minimal .grid{ grid-template-columns:1fr; }
+    body.minimal .stage{ min-height: calc(100vh - 48px); }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-    <h1>Breathing Timer (In 4s • Out 6s)</h1>
-
-    <div class="card">
-      <div class="phase" id="phase">Ready</div>
-      <div class="timer" id="time">0.0</div>
-      <div class="sub" id="sub">Press Start to begin</div>
-
-      <div class="row">
+    <header>
+      <div class="brand">
+        <div class="logo">B</div>
         <div>
-          <label for="inhale">Inhale seconds</label>
-          <input id="inhale" type="number" min="1" step="1" value="4" />
+          <h1>Breath-bro</h1>
+          <div class="tag">Guided breathing • presets • sessions</div>
         </div>
-        <div>
-          <label for="exhale">Exhale seconds</label>
-          <input id="exhale" type="number" min="1" step="1" value="6" />
+      </div>
+      <div class="topbtns">
+        <button id="minimalBtn" class="btn secondary">Minimal</button>
+        <button id="wakeBtn" class="btn secondary">Keep Awake</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="stage">
+          <div class="ringWrap" aria-label="Breathing stage">
+            <svg class="ring" viewBox="0 0 120 120">
+              <circle class="bg" cx="60" cy="60" r="52"></circle>
+              <circle class="fg" id="phaseRing" cx="60" cy="60" r="52"></circle>
+            </svg>
+
+            <div class="orbGlow"></div>
+            <div class="orb" id="orb"></div>
+
+            <div class="hud">
+              <div class="phase" id="phaseText">Ready</div>
+              <div class="count" id="countText">0.0</div>
+              <div class="sub" id="subText">Pick a preset, press Start.</div>
+
+              <div class="pillRow">
+                <div class="pill">Session: <strong id="sessionLeft">—</strong></div>
+                <div class="pill">Cycle: <strong id="cycleNum">0</strong></div>
+                <div class="pill">Mode: <strong id="modeText">2-phase</strong></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <label for="cycles">Cycles (0 = infinite)</label>
-          <input id="cycles" type="number" min="0" step="1" value="0" />
+
+        <div class="btnRow" style="margin-top:14px;">
+          <button id="startBtn" class="btn">Start</button>
+          <button id="pauseBtn" class="btn secondary" disabled>Pause</button>
+          <button id="resetBtn" class="btn secondary">Reset</button>
+        </div>
+
+        <div class="foot">
+          If breathing makes you feel worse (dizzy, chest pain, more short of breath), stop and get checked.
         </div>
       </div>
 
-      <div class="toggles">
-        <div class="toggle">
-          <span>Beep on phase change</span>
-          <input id="beep" type="checkbox" checked />
-        </div>
-        <div class="toggle">
-          <span>Voice cue (“Breathe in/out”)</span>
-          <input id="voice" type="checkbox" />
-        </div>
-        <div class="toggle">
-          <span>Vibrate on phase change (mobile)</span>
-          <input id="vibrate" type="checkbox" checked />
-        </div>
-      </div>
+      <div class="card rightCol">
+        <div class="controls">
+          <div>
+            <label for="preset">Preset</label>
+            <select id="preset">
+              <option value="calm">Calm (4–4–6–2)</option>
+              <option value="box">Box (4–4–4–4)</option>
+              <option value="focus">Focus (4–2–6–0)</option>
+              <option value="sleep">Sleep (4–7–8–0)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
 
-      <div class="buttons">
-        <button id="start">Start</button>
-        <button id="pause" class="secondary" disabled>Pause</button>
-        <button id="reset" class="secondary">Reset</button>
-      </div>
+          <div class="row">
+            <div>
+              <label for="inhale">Inhale (s)</label>
+              <input id="inhale" type="number" min="1" step="1" value="4" />
+            </div>
+            <div>
+              <label for="hold1">Hold (top) (s)</label>
+              <input id="hold1" type="number" min="0" step="1" value="4" />
+            </div>
+          </div>
 
-      <div class="stats">
-        <div class="pill"><span class="dot stopped" id="statusDot"></span><span id="statusText">Stopped</span></div>
-        <div class="pill">Phase: <strong id="phaseIdx">—</strong></div>
-        <div class="pill">Cycle: <strong id="cycleIdx">0</strong></div>
-      </div>
+          <div class="row">
+            <div>
+              <label for="exhale">Exhale (s)</label>
+              <input id="exhale" type="number" min="1" step="1" value="6" />
+            </div>
+            <div>
+              <label for="hold2">Hold (bottom) (s)</label>
+              <input id="hold2" type="number" min="0" step="1" value="2" />
+            </div>
+          </div>
 
-      <div class="hint">
-        Tip: if sound/voice doesn’t work on iPhone, tap Start once (user gesture) and keep the screen awake.
-        This is not medical advice — if breathing exercises worsen symptoms, stop and get checked.
+          <div class="row">
+            <div>
+              <label for="sessionPreset">Session length</label>
+              <select id="sessionPreset">
+                <option value="120">2 min</option>
+                <option value="300" selected>5 min</option>
+                <option value="600">10 min</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <label for="sessionCustom">Custom seconds</label>
+              <input id="sessionCustom" type="number" min="30" step="30" value="300" />
+            </div>
+          </div>
+
+          <div class="tog">
+            <div class="left">
+              <strong>Include holds (true box)</strong>
+              <span>If off: inhale → exhale only</span>
+            </div>
+            <input id="useHolds" type="checkbox" checked />
+          </div>
+
+          <div class="tog">
+            <div class="left">
+              <strong>Chime</strong>
+              <span>Soft beep on phase change</span>
+            </div>
+            <input id="chime" type="checkbox" checked />
+          </div>
+
+          <div class="tog">
+            <div class="left">
+              <strong>Voice cue</strong>
+              <span>“In… hold… out…”</span>
+            </div>
+            <input id="voice" type="checkbox" />
+          </div>
+
+          <div class="tog">
+            <div class="left">
+              <strong>Haptics</strong>
+              <span>Vibrate on phase change (mobile)</span>
+            </div>
+            <input id="haptics" type="checkbox" checked />
+          </div>
+
+          <div class="tog">
+            <div class="left">
+              <strong>Smooth orb</strong>
+              <span>More fluid animation</span>
+            </div>
+            <input id="smooth" type="checkbox" checked />
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // ----- State -----
-    const ui = {
-      phase: document.getElementById("phase"),
-      time: document.getElementById("time"),
-      sub: document.getElementById("sub"),
-      inhale: document.getElementById("inhale"),
-      exhale: document.getElementById("exhale"),
-      cycles: document.getElementById("cycles"),
-      beep: document.getElementById("beep"),
-      voice: document.getElementById("voice"),
-      vibrate: document.getElementById("vibrate"),
-      start: document.getElementById("start"),
-      pause: document.getElementById("pause"),
-      reset: document.getElementById("reset"),
-      statusText: document.getElementById("statusText"),
-      statusDot: document.getElementById("statusDot"),
-      phaseIdx: document.getElementById("phaseIdx"),
-      cycleIdx: document.getElementById("cycleIdx"),
+<script>
+(() => {
+  // ---------- UI ----------
+  const $ = (id) => document.getElementById(id);
+  const ui = {
+    preset: $("preset"),
+    inhale: $("inhale"),
+    hold1: $("hold1"),
+    exhale: $("exhale"),
+    hold2: $("hold2"),
+    useHolds: $("useHolds"),
+    sessionPreset: $("sessionPreset"),
+    sessionCustom: $("sessionCustom"),
+    chime: $("chime"),
+    voice: $("voice"),
+    haptics: $("haptics"),
+    smooth: $("smooth"),
+
+    start: $("startBtn"),
+    pause: $("pauseBtn"),
+    reset: $("resetBtn"),
+    minimal: $("minimalBtn"),
+    wake: $("wakeBtn"),
+
+    phaseText: $("phaseText"),
+    countText: $("countText"),
+    subText: $("subText"),
+    sessionLeft: $("sessionLeft"),
+    cycleNum: $("cycleNum"),
+    modeText: $("modeText"),
+
+    ring: $("phaseRing"),
+    orb: $("orb"),
+  };
+
+  // ---------- Settings ----------
+  const presets = {
+    calm:  { inhale:4, hold1:4, exhale:6, hold2:2, useHolds:true,  session:300 },
+    box:   { inhale:4, hold1:4, exhale:4, hold2:4, useHolds:true,  session:300 },
+    focus: { inhale:4, hold1:2, exhale:6, hold2:0, useHolds:true,  session:300 },
+    sleep: { inhale:4, hold1:7, exhale:8, hold2:0, useHolds:true,  session:600 },
+  };
+
+  const LS_KEY = "breathbro_settings_v1";
+
+  function clampInt(v, min, fallback) {
+    const n = parseInt(v, 10);
+    if (Number.isFinite(n) && n >= min) return n;
+    return fallback;
+  }
+
+  function formatMMSS(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function saveSettings() {
+    const data = readSettings();
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }
+
+  function readSettings() {
+    return {
+      preset: ui.preset.value,
+      inhale: clampInt(ui.inhale.value, 1, 4),
+      hold1: clampInt(ui.hold1.value, 0, 4),
+      exhale: clampInt(ui.exhale.value, 1, 6),
+      hold2: clampInt(ui.hold2.value, 0, 2),
+      useHolds: !!ui.useHolds.checked,
+      sessionPreset: ui.sessionPreset.value,
+      sessionCustom: clampInt(ui.sessionCustom.value, 30, 300),
+      chime: !!ui.chime.checked,
+      voice: !!ui.voice.checked,
+      haptics: !!ui.haptics.checked,
+      smooth: !!ui.smooth.checked,
+      minimal: document.body.classList.contains("minimal"),
     };
+  }
 
-    let running = false;
-    let paused = false;
-    let rafId = null;
+  function applySettings(s) {
+    ui.preset.value = s.preset ?? "calm";
+    ui.inhale.value = s.inhale ?? 4;
+    ui.hold1.value  = s.hold1 ?? 4;
+    ui.exhale.value = s.exhale ?? 6;
+    ui.hold2.value  = s.hold2 ?? 2;
+    ui.useHolds.checked = s.useHolds ?? true;
 
-    let phaseList = []; // [{name, seconds, cue}]
-    let phaseIndex = 0;
-    let cycleCount = 0;
-    let cycleTarget = 0;
+    ui.sessionPreset.value = s.sessionPreset ?? "300";
+    ui.sessionCustom.value = s.sessionCustom ?? 300;
 
-    let phaseStartTs = 0;
-    let phaseDurationMs = 0;
-    let pausedAt = 0;
+    ui.chime.checked = s.chime ?? true;
+    ui.voice.checked = s.voice ?? false;
+    ui.haptics.checked = s.haptics ?? true;
+    ui.smooth.checked = s.smooth ?? true;
 
-    // ----- Helpers -----
-    function clampInt(v, min, fallback) {
-      const n = parseInt(v, 10);
-      if (Number.isFinite(n) && n >= min) return n;
-      return fallback;
+    if (s.minimal) document.body.classList.add("minimal");
+    else document.body.classList.remove("minimal");
+
+    updateModeText();
+  }
+
+  // ---------- Wake Lock ----------
+  let wakeLock = null;
+  async function toggleWakeLock() {
+    try {
+      if (wakeLock) {
+        await wakeLock.release();
+        wakeLock = null;
+        ui.wake.textContent = "Keep Awake";
+        return;
+      }
+      if ("wakeLock" in navigator) {
+        wakeLock = await navigator.wakeLock.request("screen");
+        ui.wake.textContent = "Awake ✓";
+        wakeLock.addEventListener("release", () => {
+          wakeLock = null;
+          ui.wake.textContent = "Keep Awake";
+        });
+      } else {
+        alert("Keep Awake isn’t supported on this browser. Try adding to Home Screen and keeping the screen on.");
+      }
+    } catch (e) {
+      alert("Couldn’t enable Keep Awake. Try again or keep the screen on.");
     }
+  }
 
-    function setStatus(kind, text) {
-      ui.statusText.textContent = text;
-      ui.statusDot.classList.remove("stopped", "paused");
-      if (kind === "stopped") ui.statusDot.classList.add("stopped");
-      if (kind === "paused") ui.statusDot.classList.add("paused");
+  // ---------- Audio / Speech / Haptics ----------
+  function safeVibrate(pattern) {
+    if (!ui.haptics.checked) return;
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_) {}
+  }
+
+  function beep(freq = 660, durationMs = 80) {
+    if (!ui.chime.checked) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.frequency.value = freq;
+      o.type = "sine";
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); ctx.close(); }, durationMs);
+    } catch (_) {}
+  }
+
+  function speak(text) {
+    if (!ui.voice.checked) return;
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      u.lang = "en-AU";
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } catch (_) {}
+  }
+
+  // ---------- Engine ----------
+  let running = false;
+  let paused = false;
+  let rafId = null;
+
+  let phases = [];
+  let phaseIndex = 0;
+  let cycle = 0;
+
+  let phaseStart = 0;
+  let phaseMs = 0;
+  let pauseAt = 0;
+
+  let sessionTotal = 300; // seconds
+  let sessionEndTs = 0;   // ms timestamp
+  let sessionLeftSec = 300;
+
+  // For ring
+  const R = 52;
+  const C = 2 * Math.PI * R;
+  ui.ring.style.strokeDasharray = `${C}`;
+  ui.ring.style.strokeDashoffset = `${C}`;
+
+  function buildPhases() {
+    const inhale = clampInt(ui.inhale.value, 1, 4);
+    const hold1  = clampInt(ui.hold1.value, 0, 4);
+    const exhale = clampInt(ui.exhale.value, 1, 6);
+    const hold2  = clampInt(ui.hold2.value, 0, 2);
+    const useHolds = !!ui.useHolds.checked;
+
+    const list = [];
+    list.push({ key:"inhale", label:"Breathe in",  seconds: inhale, intent:"in" });
+    if (useHolds && hold1 > 0) list.push({ key:"hold1", label:"Hold", seconds: hold1, intent:"hold" });
+    list.push({ key:"exhale", label:"Breathe out", seconds: exhale, intent:"out" });
+    if (useHolds && hold2 > 0) list.push({ key:"hold2", label:"Hold", seconds: hold2, intent:"hold" });
+
+    phases = list;
+    updateModeText();
+  }
+
+  function updateModeText() {
+    ui.modeText.textContent = ui.useHolds.checked ? "4-phase" : "2-phase";
+  }
+
+  function getSessionSeconds() {
+    const presetVal = ui.sessionPreset.value;
+    if (presetVal === "custom") return clampInt(ui.sessionCustom.value, 30, 300);
+    return clampInt(presetVal, 30, 300);
+  }
+
+  function setHud(phaseLabel, remainingSec, extraSub) {
+    ui.phaseText.textContent = phaseLabel;
+    ui.countText.textContent = remainingSec.toFixed(1);
+    ui.subText.textContent = extraSub;
+  }
+
+  function setRing(progress01) {
+    // progress01: 0 -> 1 (0 means start of phase, 1 means end)
+    const off = C * (1 - progress01);
+    ui.ring.style.strokeDashoffset = `${off}`;
+  }
+
+  function cueForPhase(p) {
+    // Subtle frequency mapping
+    const f = p.intent === "in" ? 740 : p.intent === "out" ? 520 : 600;
+    beep(f, 80);
+    safeVibrate([30, 30, 30]);
+    speak(p.label);
+  }
+
+  function startPhase(idx, now) {
+    phaseIndex = idx;
+    const p = phases[phaseIndex];
+    phaseStart = now;
+    phaseMs = p.seconds * 1000;
+
+    cueForPhase(p);
+    setHud(p.label, p.seconds, `${p.seconds}s`);
+    setRing(0);
+  }
+
+  function stopEverything(done = false) {
+    running = false;
+    paused = false;
+    ui.start.disabled = false;
+    ui.pause.disabled = true;
+    ui.pause.textContent = "Pause";
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+
+    if (done) {
+      ui.phaseText.textContent = "Done";
+      ui.countText.textContent = "0.0";
+      ui.subText.textContent = `Session complete. Nice work.`;
+      beep(880, 140);
+      safeVibrate([60, 60, 120]);
     }
+  }
 
-    function formatTime(s) {
-      return s.toFixed(1);
+  function reset() {
+    stopEverything(false);
+    cycle = 0;
+    ui.cycleNum.textContent = "0";
+    ui.sessionLeft.textContent = "—";
+    ui.phaseText.textContent = "Ready";
+    ui.countText.textContent = "0.0";
+    ui.subText.textContent = "Pick a preset, press Start.";
+    setRing(0);
+    ui.orb.style.transform = `scale(0.88)`;
+  }
+
+  function start() {
+    if (running && !paused) return;
+
+    buildPhases();
+    sessionTotal = getSessionSeconds();
+    sessionLeftSec = sessionTotal;
+
+    if (!running) {
+      running = true;
+      paused = false;
+
+      ui.start.disabled = true;
+      ui.pause.disabled = false;
+      ui.pause.textContent = "Pause";
+
+      cycle = 0;
+      ui.cycleNum.textContent = `${cycle}`;
+
+      const now = performance.now();
+      sessionEndTs = now + sessionTotal * 1000;
+      startPhase(0, now);
+
+      rafId = requestAnimationFrame(tick);
+    } else if (paused) {
+      paused = false;
+      ui.start.disabled = true;
+      ui.pause.textContent = "Pause";
+      const now = performance.now();
+      const pausedDur = now - pauseAt;
+      phaseStart += pausedDur;
+      sessionEndTs += pausedDur;
     }
+  }
 
-    function safeVibrate(pattern) {
-      try {
-        if (ui.vibrate.checked && navigator.vibrate) navigator.vibrate(pattern);
-      } catch (_) {}
+  function pause() {
+    if (!running) return;
+    if (!paused) {
+      paused = true;
+      pauseAt = performance.now();
+      ui.start.disabled = false;
+      ui.pause.textContent = "Resume";
+      ui.subText.textContent = "Paused";
+    } else {
+      start(); // resume
     }
+  }
 
-    // Simple beep using Web Audio (created on demand to satisfy mobile autoplay policies)
-    function beep(freq = 660, durationMs = 90) {
-      if (!ui.beep.checked) return;
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.frequency.value = freq;
-        o.type = "sine";
-        g.gain.value = 0.06;
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.start();
-        setTimeout(() => {
-          o.stop();
-          ctx.close();
-        }, durationMs);
-      } catch (_) {}
-    }
+  function tick(now) {
+    if (!running) return;
 
-    function speak(text) {
-      if (!ui.voice.checked) return;
-      try {
-        const u = new SpeechSynthesisUtterance(text);
-        u.rate = 1.0;
-        u.pitch = 1.0;
-        u.lang = "en-AU";
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-      } catch (_) {}
-    }
+    if (!paused) {
+      // session remaining
+      const leftMs = Math.max(0, sessionEndTs - now);
+      sessionLeftSec = leftMs / 1000;
+      ui.sessionLeft.textContent = formatMMSS(sessionLeftSec);
 
-    function buildPhases() {
-      const inhaleS = clampInt(ui.inhale.value, 1, 4);
-      const exhaleS = clampInt(ui.exhale.value, 1, 6);
-
-      phaseList = [
-        { name: "Breathe in", seconds: inhaleS, cue: "Breathe in" },
-        { name: "Breathe out", seconds: exhaleS, cue: "Breathe out" },
-      ];
-
-      cycleTarget = clampInt(ui.cycles.value, 0, 0);
-    }
-
-    function startPhase(idx, now) {
-      phaseIndex = idx;
-      const p = phaseList[phaseIndex];
-      ui.phase.textContent = p.name;
-      ui.sub.textContent = `${p.seconds}s`;
-      ui.phaseIdx.textContent = `${phaseIndex + 1}/${phaseList.length}`;
-      ui.cycleIdx.textContent = `${cycleCount}`;
-
-      phaseStartTs = now;
-      phaseDurationMs = p.seconds * 1000;
-
-      // Cues
-      beep(phaseIndex === 0 ? 740 : 520, 90);
-      speak(p.cue);
-      safeVibrate([35, 30, 35]);
-    }
-
-    function tick(now) {
-      if (!running) return;
-
-      if (paused) {
-        rafId = requestAnimationFrame(tick);
+      if (leftMs <= 0) {
+        stopEverything(true);
         return;
       }
 
-      const elapsed = now - phaseStartTs;
-      const remaining = Math.max(0, phaseDurationMs - elapsed);
-      ui.time.textContent = formatTime(remaining / 1000);
+      // phase remaining
+      const elapsed = now - phaseStart;
+      const remaining = Math.max(0, phaseMs - elapsed);
+      ui.countText.textContent = (remaining / 1000).toFixed(1);
 
+      const p = phases[phaseIndex];
+      const phaseProgress = phaseMs > 0 ? Math.min(1, elapsed / phaseMs) : 1;
+      setRing(phaseProgress);
+
+      // animate orb (smoothly)
+      const smooth = !!ui.smooth.checked;
+      const base = 0.88;
+      const max = 1.06;
+
+      // "intent" defines direction
+      let target = base;
+      if (p.intent === "in") target = max;
+      if (p.intent === "out") target = base;
+      if (p.intent === "hold") target = (ui.orb.dataset.lastScale ? parseFloat(ui.orb.dataset.lastScale) : base);
+
+      // during inhale/exhale interpolate scale across the phase for a guided feel
+      let scale = target;
+      if (p.intent === "in") scale = base + (max - base) * phaseProgress;
+      if (p.intent === "out") scale = max - (max - base) * phaseProgress;
+
+      if (smooth) {
+        // small easing
+        const current = ui.orb.dataset.currentScale ? parseFloat(ui.orb.dataset.currentScale) : scale;
+        const eased = current + (scale - current) * 0.12;
+        ui.orb.dataset.currentScale = eased.toFixed(4);
+        ui.orb.style.transform = `scale(${eased})`;
+        ui.orb.dataset.lastScale = eased.toFixed(4);
+      } else {
+        ui.orb.style.transform = `scale(${scale})`;
+        ui.orb.dataset.lastScale = scale.toFixed(4);
+      }
+
+      // phase transition
       if (remaining <= 0) {
-        // Move to next phase / cycle
         let next = phaseIndex + 1;
-        if (next >= phaseList.length) {
+        if (next >= phases.length) {
           next = 0;
-          cycleCount += 1;
-          ui.cycleIdx.textContent = `${cycleCount}`;
-
-          // If user set a cycle target (non-zero), stop when reached
-          if (cycleTarget > 0 && cycleCount >= cycleTarget) {
-            stop();
-            ui.phase.textContent = "Done";
-            ui.time.textContent = "0.0";
-            ui.sub.textContent = `Completed ${cycleCount} cycle(s)`;
-            beep(880, 140);
-            safeVibrate([60, 60, 120]);
-            return;
-          }
+          cycle += 1;
+          ui.cycleNum.textContent = `${cycle}`;
         }
         startPhase(next, now);
       }
-
-      rafId = requestAnimationFrame(tick);
     }
 
-    function start() {
-      if (running && !paused) return;
+    rafId = requestAnimationFrame(tick);
+  }
 
-      buildPhases();
+  // ---------- Presets wiring ----------
+  function applyPreset(name) {
+    if (!presets[name]) return;
+    const p = presets[name];
+    ui.inhale.value = p.inhale;
+    ui.hold1.value  = p.hold1;
+    ui.exhale.value = p.exhale;
+    ui.hold2.value  = p.hold2;
+    ui.useHolds.checked = p.useHolds;
 
-      if (!running) {
-        running = true;
-        paused = false;
-        cycleCount = 0;
-        setStatus("running", "Running");
-        ui.start.disabled = true;
-        ui.pause.disabled = false;
-        ui.pause.textContent = "Pause";
+    // session
+    ui.sessionCustom.value = p.session;
+    ui.sessionPreset.value = String(p.session); // might not exist in dropdown, fallback:
+    if (![ "120","300","600" ].includes(String(p.session))) ui.sessionPreset.value = "custom";
 
-        const now = performance.now();
-        startPhase(0, now);
-        rafId = requestAnimationFrame(tick);
-      } else if (paused) {
-        // Resume: shift start timestamp by paused duration
-        paused = false;
-        setStatus("running", "Running");
-        ui.pause.textContent = "Pause";
-        const now = performance.now();
-        const pausedDuration = now - pausedAt;
-        phaseStartTs += pausedDuration;
-      }
+    updateModeText();
+  }
+
+  function markCustomPreset() {
+    ui.preset.value = "custom";
+  }
+
+  // ---------- Minimal mode ----------
+  function toggleMinimal() {
+    document.body.classList.toggle("minimal");
+    ui.minimal.textContent = document.body.classList.contains("minimal") ? "Controls" : "Minimal";
+    saveSettings();
+  }
+
+  // ---------- Events ----------
+  ui.start.addEventListener("click", () => { saveSettings(); start(); });
+  ui.pause.addEventListener("click", pause);
+  ui.reset.addEventListener("click", () => { saveSettings(); reset(); });
+
+  ui.minimal.addEventListener("click", toggleMinimal);
+  ui.wake.addEventListener("click", toggleWakeLock);
+
+  ui.preset.addEventListener("change", () => {
+    if (ui.preset.value !== "custom") applyPreset(ui.preset.value);
+    saveSettings();
+  });
+
+  // Any manual change flips preset to custom
+  [ui.inhale, ui.hold1, ui.exhale, ui.hold2, ui.useHolds, ui.sessionPreset, ui.sessionCustom, ui.chime, ui.voice, ui.haptics, ui.smooth]
+    .forEach(el => el.addEventListener("change", () => {
+      if (el !== ui.preset && ui.preset.value !== "custom") markCustomPreset();
+      if (el === ui.useHolds) updateModeText();
+      if (el === ui.sessionPreset && ui.sessionPreset.value !== "custom") ui.sessionCustom.value = ui.sessionPreset.value;
+      saveSettings();
+    }));
+
+  ui.sessionPreset.addEventListener("change", () => {
+    if (ui.sessionPreset.value === "custom") return;
+    ui.sessionCustom.value = ui.sessionPreset.value;
+    saveSettings();
+  });
+
+  // ---------- Init ----------
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+    if (saved) applySettings(saved);
+    else {
+      ui.preset.value = "calm";
+      applyPreset("calm");
+      saveSettings();
     }
+  } catch (_) {
+    ui.preset.value = "calm";
+    applyPreset("calm");
+  }
 
-    function pause() {
-      if (!running) return;
-      if (!paused) {
-        paused = true;
-        pausedAt = performance.now();
-        setStatus("paused", "Paused");
-        ui.start.disabled = false;
-        ui.pause.textContent = "Resume";
-        ui.sub.textContent = "Paused";
-      } else {
-        start(); // resume
-      }
-    }
+  // Ensure minimal button label correct
+  ui.minimal.textContent = document.body.classList.contains("minimal") ? "Controls" : "Minimal";
 
-    function stop() {
-      running = false;
-      paused = false;
-      setStatus("stopped", "Stopped");
-      ui.start.disabled = false;
-      ui.pause.disabled = true;
-      ui.pause.textContent = "Pause";
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-      ui.phaseIdx.textContent = "—";
-    }
-
-    function reset() {
-      stop();
-      ui.phase.textContent = "Ready";
-      ui.time.textContent = "0.0";
-      ui.sub.textContent = "Press Start to begin";
-      cycleCount = 0;
-      ui.cycleIdx.textContent = "0";
-    }
-
-    // ----- Wire up UI -----
-    ui.start.addEventListener("click", start);
-    ui.pause.addEventListener("click", pause);
-    ui.reset.addEventListener("click", reset);
-
-    // Update display if user edits durations while stopped
-    ["input", "change"].forEach(evt => {
-      ui.inhale.addEventListener(evt, () => { if (!running) ui.sub.textContent = "Press Start to begin"; });
-      ui.exhale.addEventListener(evt, () => { if (!running) ui.sub.textContent = "Press Start to begin"; });
-      ui.cycles.addEventListener(evt, () => { if (!running) ui.sub.textContent = "Press Start to begin"; });
-    });
-
-    // Initial
-    reset();
-  </script>
+  reset();
+})();
+</script>
 </body>
 </html>
